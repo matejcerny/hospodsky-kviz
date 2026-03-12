@@ -1,4 +1,4 @@
-name: Build Executables
+name: Build and Release Executables
 
 on:
   push:
@@ -36,9 +36,39 @@ jobs:
       - name: Build
         run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -f -o ${{ matrix.output_file }}
 
-      - name: Publish
+      - name: Zabaleni do ZIPu (macOS)
+        if: runner.os == 'macOS'
+        run: zip kontrola_tymu_macos.zip ${{ matrix.output_file }}
+
+      - name: Zabaleni do ZIPu (Windows)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path ${{ matrix.output_file }} -DestinationPath kontrola_tymu_windows.zip
+
+      - name: Nahrani do docasneho artefaktu
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.output_file }}
+          path: '*.zip'
           if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Důležité: Povoluje vytvoření veřejného vydání
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Update release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "latest"
+          name: "Aktuální verze"
+          body: "Automaticky zkompilovaná verze z nejnovějšího zdrojového kódu."
+          artifacts: "artifacts/*.zip"
+          allowUpdates: true
+          replacesArtifacts: true

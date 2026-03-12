@@ -1,13 +1,17 @@
 # Hospodský kvíz - Automatická kontrola týmů
 
-Skript po spuštění stáhne týmy z webové rezervace, porovná je se systémem a případně dohledá chybějící týmy v globální databázi Hospodského kvízu.
+Aplikace po spuštění stáhne týmy z webové rezervace, porovná je se systémem a případně dohledá chybějící týmy v globální databázi Hospodského kvízu.
 
-## Instalace
+## Stažení programu
 
-Stáhni soubor `kontrola_tymu.zip`.
+Nejnovější verzi si můžeš kdykoli stáhnout zde:
+[**Odkaz na stažení - Aktuální verze**](https://github.com/matejcerny/hospodsky-kviz/releases/latest)
 
-![](images/screenshot1.png)
-![](images/screenshot2.png)
+Na otevřené stránce sjeď dolů do sekce **Assets** a klikni na archiv podle tvého počítače:
+* `kontrola_tymu_windows.zip` (pro Windows)
+* `kontrola_tymu_macos.zip` (pro Mac)
+
+Archiv si stáhni, rozbal a můžeš rovnou spouštět. Návod k prvnímu spuštění najdeš níže.
 
 ## První spuštění na macOS
 
