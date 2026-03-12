@@ -32,7 +32,7 @@ jobs:
         uses: VirtusLab/scala-cli-setup@main
 
       - name: Build
-        run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -o -f ${{ matrix.output_file }}
+        run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -f -o ${{ matrix.output_file }}
 
       - name: Publish
         uses: actions/upload-artifact@v4
