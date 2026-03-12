@@ -1,7 +1,5 @@
 name: Build Executables
 
-# Spustí se automaticky při nahrání nového kódu na větev main, 
-# nebo to můžeš spustit ručně z GitHub rozhraní.
 on:
   push:
     branches: [ "main" ]
@@ -11,7 +9,6 @@ jobs:
   build:
     strategy:
       matrix:
-        # Vytvoříme dvě paralelní sestavení - pro Mac a pro Windows
         os: [macos-latest, windows-latest]
         include:
           - os: macos-latest
@@ -24,20 +21,20 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Stazeni repozitare
+      - name: Prepare
         uses: actions/checkout@v4
 
-      - name: Instalace LLVM a Clang pro Windows
+      - name: LLVM and Clang
         if: runner.os == 'Windows'
         run: choco install llvm -y
 
-      - name: Nastaveni Scala CLI
+      - name: Scala CLI
         uses: VirtusLab/scala-cli-setup@main
 
-      - name: Kompilace nativni binarky
-        run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -o ${{ matrix.output_file }}
+      - name: Build
+        run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -o -f ${{ matrix.output_file }}
 
-      - name: Nahrani vysledku (Artifact)
+      - name: Publish
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
