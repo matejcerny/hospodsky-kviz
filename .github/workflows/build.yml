@@ -33,22 +33,28 @@ jobs:
       - name: Scala CLI
         uses: VirtusLab/scala-cli-setup@main
 
-      - name: Purge Homebrew libraries to ensure portability (macOS)
+      - name: Prepare static dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew uninstall --ignore-dependencies libidn2 curl
+          # 1. Ensure the required libraries are installed on the runner
+          brew install libidn2 libunistring
 
-      - name: Override curl pkg-config for portable binary (macOS)
-        if: runner.os == 'macOS'
-        run: |
+          # 2. Isolate ONLY the static (.a) libraries into a temporary folder
+          mkdir -p /tmp/static-libs
+          cp $(brew --prefix libidn2)/lib/libidn2.a /tmp/static-libs/
+          cp $(brew --prefix libunistring)/lib/libunistring.a /tmp/static-libs/
+
+          # 3. Uninstall Homebrew packages so the dynamic (.dylib) versions are hidden from the linker
+          brew uninstall --ignore-dependencies libidn2 libunistring curl
+
+          # 4. Point libcurl to the macOS System version
           SDKROOT="$(xcrun --show-sdk-path)"
           mkdir -p /tmp/pkgconfig
           printf "Name: libcurl\nDescription: Apple System libcurl\nVersion: 8.0.0\nLibs: -L${SDKROOT}/usr/lib -lcurl\nCflags: -I${SDKROOT}/usr/include\n" > /tmp/pkgconfig/libcurl.pc
-          cat /tmp/pkgconfig/libcurl.pc
           echo "PKG_CONFIG_PATH=/tmp/pkgconfig" >> $GITHUB_ENV
 
       - name: Build
-        run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -f -o ${{ matrix.output_file }}
+        run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -f -o ${{ matrix.output_file }} --native-linking "-L/tmp/static-libs" --native-linking "-lunistring" --native-linking "-liconv"
 
       - name: Verify portable dependencies (macOS)
         if: runner.os == 'macOS'
