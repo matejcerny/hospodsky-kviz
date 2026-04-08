@@ -33,11 +33,14 @@ jobs:
       - name: Scala CLI
         uses: VirtusLab/scala-cli-setup@main
 
+      - name: Purge Homebrew libraries to ensure portability (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew uninstall --ignore-dependencies libidn2 curl
+
       - name: Override curl pkg-config for portable binary (macOS)
         if: runner.os == 'macOS'
         run: |
-          # Completely bypass Homebrew by pointing both headers and libs to the macOS SDK.
-          # This ensures we strictly use Apple's provided libcurl and avoid libidn2.
           SDKROOT="$(xcrun --show-sdk-path)"
           mkdir -p /tmp/pkgconfig
           printf "Name: libcurl\nDescription: Apple System libcurl\nVersion: 8.0.0\nLibs: -L${SDKROOT}/usr/lib -lcurl\nCflags: -I${SDKROOT}/usr/include\n" > /tmp/pkgconfig/libcurl.pc
