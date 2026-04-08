@@ -39,15 +39,10 @@ jobs:
           # Homebrew's libcurl.pc pulls in -lidn2 which isn't available on stock macOS.
           # We provide a minimal pkg-config that uses Homebrew headers for compilation
           # but only links -lcurl, which resolves to the system curl (/usr/lib/libcurl.4.dylib).
-          CURL_INCLUDE=$(brew --prefix curl)/include
+          CURL_INCLUDE="$(brew --prefix curl)/include"
           mkdir -p /tmp/pkgconfig
-          cat > /tmp/pkgconfig/libcurl.pc << EOF
-          Name: libcurl
-          Description: libcurl
-          Version: 8.0.0
-          Libs: -lcurl
-          Cflags: -I${CURL_INCLUDE}
-          EOF
+          printf 'Name: libcurl\nDescription: libcurl\nVersion: 8.0.0\nLibs: -lcurl\nCflags: -I%s\n' "$CURL_INCLUDE" > /tmp/pkgconfig/libcurl.pc
+          cat /tmp/pkgconfig/libcurl.pc
           echo "PKG_CONFIG_PATH=/tmp/pkgconfig" >> $GITHUB_ENV
 
       - name: Build
