@@ -33,6 +33,14 @@ jobs:
       - name: Scala CLI
         uses: VirtusLab/scala-cli-setup@main
 
+      - name: Use system curl for portable binary (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          # Unlink Homebrew curl/libidn2 so the linker finds only the macOS system curl,
+          # which has no external dependencies. This makes the binary portable to any Mac.
+          brew unlink curl 2>/dev/null || true
+          brew unlink libidn2 2>/dev/null || true
+
       - name: Build
         run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -f -o ${{ matrix.output_file }}
 
