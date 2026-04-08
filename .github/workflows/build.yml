@@ -33,16 +33,35 @@ jobs:
       - name: Scala CLI
         uses: VirtusLab/scala-cli-setup@main
 
-      - name: Use system curl for portable binary (macOS)
+      - name: Override curl pkg-config for portable binary (macOS)
         if: runner.os == 'macOS'
         run: |
-          # Unlink Homebrew curl/libidn2 so the linker finds only the macOS system curl,
-          # which has no external dependencies. This makes the binary portable to any Mac.
-          brew unlink curl 2>/dev/null || true
-          brew unlink libidn2 2>/dev/null || true
+          # Homebrew's libcurl.pc pulls in -lidn2 which isn't available on stock macOS.
+          # We provide a minimal pkg-config that uses Homebrew headers for compilation
+          # but only links -lcurl, which resolves to the system curl (/usr/lib/libcurl.4.dylib).
+          CURL_INCLUDE=$(brew --prefix curl)/include
+          mkdir -p /tmp/pkgconfig
+          cat > /tmp/pkgconfig/libcurl.pc << EOF
+          Name: libcurl
+          Description: libcurl
+          Version: 8.0.0
+          Libs: -lcurl
+          Cflags: -I${CURL_INCLUDE}
+          EOF
+          echo "PKG_CONFIG_PATH=/tmp/pkgconfig" >> $GITHUB_ENV
 
       - name: Build
         run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -f -o ${{ matrix.output_file }}
+
+      - name: Verify portable dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "Dynamic dependencies:"
+          otool -L ${{ matrix.output_file }}
+          if otool -L ${{ matrix.output_file }} | grep /opt/homebrew; then
+            echo "ERROR: Binary still references Homebrew libraries!"
+            exit 1
+          fi
 
       - name: Zabaleni do ZIPu (macOS)
         if: runner.os == 'macOS'
