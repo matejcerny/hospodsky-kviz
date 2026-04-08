@@ -33,17 +33,9 @@ jobs:
       - name: Scala CLI
         uses: VirtusLab/scala-cli-setup@main
 
-      - name: Override curl pkg-config for portable binary (macOS)
+      - name: Remove libidn2 for portable binary (macOS)
         if: runner.os == 'macOS'
-        run: |
-          # Homebrew's libcurl.pc pulls in -lidn2 which isn't available on stock macOS.
-          # We provide a minimal pkg-config that uses Homebrew headers for compilation
-          # but only links -lcurl, which resolves to the system curl (/usr/lib/libcurl.4.dylib).
-          CURL_INCLUDE="$(brew --prefix curl)/include"
-          mkdir -p /tmp/pkgconfig
-          printf 'Name: libcurl\nDescription: libcurl\nVersion: 8.0.0\nLibs: -lcurl\nCflags: -I%s\n' "$CURL_INCLUDE" > /tmp/pkgconfig/libcurl.pc
-          cat /tmp/pkgconfig/libcurl.pc
-          echo "PKG_CONFIG_PATH=/tmp/pkgconfig" >> $GITHUB_ENV
+        run: brew uninstall --ignore-dependencies libidn2
 
       - name: Build
         run: scala-cli --power package kontrola_tymu.scala --native --native-mode release-full -f -o ${{ matrix.output_file }}
